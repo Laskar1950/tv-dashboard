@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=1920, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>TV Dashboard — Cirebon & Premier League</title>
+  <style>
+    :root {
+      --bg: #0b0f19;
+      --card-bg: rgba(255, 255, 255, 0.05);
+      --card-border: rgba(255, 255, 255, 0.1);
+      --card-focus: rgba(255, 255, 255, 0.25);
+      --accent: #3b82f6;
+      --accent-glow: rgba(59, 130, 246, 0.4);
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: radial-gradient(circle at 20% 20%, #172554 0%, var(--bg) 70%);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+      padding: 36px 48px;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 28px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--card-border);
+    }
+    .header-left h1 {
+      font-size: 32px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .badge-city {
+      background: rgba(59, 130, 246, 0.2);
+      border: 1px solid var(--accent);
+      color: #93c5fd;
+      font-size: 13px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .header-right {
+      text-align: right;
+    }
+    .clock {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+    .date {
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+
+    /* Main Grid */
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: 480px 1fr;
+      gap: 32px;
+      align-items: start;
+    }
+
+    /* Cards */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 24px;
+      padding: 28px;
+      backdrop-filter: blur(20px);
+      box-shadow: 0 12px 36px rgba(0,0,0,0.4);
+    }
+
+    /* AQI Card */
+    .aqi-card {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .card-title {
+      font-size: 20px;
+      font-weight: 600;
+      color: #e2e8f0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .aqi-hero {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      padding: 20px;
+      background: rgba(0, 0, 0, 0.25);
+      border-radius: 18px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    .aqi-dial {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 30px rgba(0,0,0,0.5);
+      position: relative;
+    }
+    .aqi-val {
+      font-size: 42px;
+      font-weight: 800;
+      line-height: 1;
+    }
+    .aqi-unit {
+      font-size: 11px;
+      text-transform: uppercase;
+      opacity: 0.8;
+      letter-spacing: 0.5px;
+      margin-top: 2px;
+    }
+    .aqi-meta {
+      flex: 1;
+    }
+    .aqi-status {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .aqi-advice {
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+    .metrics-row {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+    .metric-box {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 14px;
+      padding: 14px 16px;
+    }
+    .metric-label {
+      font-size: 12px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .metric-val {
+      font-size: 22px;
+      font-weight: 700;
+      margin-top: 4px;
+    }
+
+    /* EPL Card */
+    .epl-card {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+    .epl-nav {
+      display: flex;
+      gap: 12px;
+    }
+    .btn-tab {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--card-border);
+      color: var(--text-muted);
+      padding: 8px 18px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-tab.active, .btn-tab:focus {
+      background: var(--accent);
+      border-color: #60a5fa;
+      color: #fff;
+      box-shadow: 0 0 16px var(--accent-glow);
+      outline: none;
+    }
+    .table-container {
+      max-height: 640px;
+      overflow-y: auto;
+      border-radius: 14px;
+    }
+    .table-container::-webkit-scrollbar { width: 6px; }
+    .table-container::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 3px; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    th {
+      text-align: left;
+      padding: 10px 12px;
+      color: var(--text-muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      position: sticky;
+      top: 0;
+      background: #111827;
+      z-index: 10;
+    }
+    th.center, td.center { text-align: center; }
+    th.right, td.right { text-align: right; }
+    tr {
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      transition: background 0.1s;
+    }
+    tr:hover, tr:focus {
+      background: rgba(255, 255, 255, 0.06);
+    }
+    td {
+      padding: 10px 12px;
+      vertical-align: middle;
+    }
+    .team-cell {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 600;
+      font-size: 15px;
+    }
+    .team-logo {
+      width: 24px;
+      height: 24px;
+      object-fit: contain;
+    }
+    .rank-cell {
+      font-weight: 700;
+      width: 32px;
+      text-align: center;
+      border-left: 3px solid transparent;
+    }
+    .rank-ucl { border-left-color: #3b82f6; color: #60a5fa; }
+    .rank-uel { border-left-color: #f59e0b; color: #fbbf24; }
+    .rank-rel { border-left-color: #ef4444; color: #f87171; }
+    .pts-cell {
+      font-weight: 800;
+      font-size: 16px;
+      color: #38bdf8;
+    }
+
+    /* Fixtures List */
+    .fixtures-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      max-height: 640px;
+      overflow-y: auto;
+    }
+    .fixture-item {
+      display: grid;
+      grid-template-columns: 1fr 140px 1fr;
+      align-items: center;
+      background: rgba(0,0,0,0.25);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 14px;
+      padding: 14px 20px;
+    }
+    .fixture-home {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 12px;
+      font-weight: 600;
+      font-size: 16px;
+      text-align: right;
+    }
+    .fixture-away {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 600;
+      font-size: 16px;
+    }
+    .fixture-mid {
+      text-align: center;
+    }
+    .fixture-time {
+      font-size: 14px;
+      font-weight: 700;
+      color: #38bdf8;
+      background: rgba(56, 189, 248, 0.1);
+      padding: 4px 10px;
+      border-radius: 8px;
+      display: inline-block;
+    }
+    .fixture-date {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* TV Remote Guide */
+    footer {
+      margin-top: 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: var(--text-muted);
+      font-size: 12px;
+    }
+    .remote-hint {
+      display: flex;
+      gap: 18px;
+    }
+    .key-badge {
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 6px;
+      padding: 2px 8px;
+      color: #fff;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-left">
+      <h1>Dashboard TV <span class="badge-city">Cirebon · EPL</span></h1>
+    </div>
+    <div class="header-right">
+      <div class="clock" id="clock">--:--</div>
+      <div class="date" id="date">Memuat tanggal...</div>
+    </div>
+  </header>
+
+  <div class="dashboard-grid">
+    <!-- AQI Card -->
+    <div class="card aqi-card">
+      <div class="card-title">
+        <span>Kualitas Udara Kota Cirebon</span>
+      </div>
+
+      <div class="aqi-hero">
+        <div class="aqi-dial" id="aqiDial" style="background: radial-gradient(circle, #eab308 0%, #854d0e 100%);">
+          <div class="aqi-val" id="aqiVal">--</div>
+          <div class="aqi-unit">US AQI</div>
+        </div>
+        <div class="aqi-meta">
+          <div class="aqi-status" id="aqiStatus">Memuat...</div>
+          <div class="aqi-advice" id="aqiAdvice">Mengambil data stasiun Cirebon...</div>
+        </div>
+      </div>
+
+      <div class="metrics-row">
+        <div class="metric-box">
+          <div class="metric-label">Partikulat PM2.5</div>
+          <div class="metric-val" id="pm25Val">-- µg/m³</div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-label">Partikulat PM10</div>
+          <div class="metric-val" id="pm10Val">-- µg/m³</div>
+        </div>
+      </div>
+
+      <div class="metric-box">
+        <div class="metric-label">Stasiun Lokasi</div>
+        <div class="metric-val" style="font-size: 15px; font-weight: 500; margin-top: 6px;">
+          Cirebon (Lat: -6.73°, Lon: 108.55°)
+        </div>
+      </div>
+    </div>
+
+    <!-- EPL Card -->
+    <div class="card epl-card">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div class="card-title">
+          <span>Liga Inggris (Premier League)</span>
+        </div>
+        <div class="epl-nav">
+          <button class="btn-tab active" id="tabStandings" onclick="showTab('standings')" tabindex="1">Klasemen</button>
+          <button class="btn-tab" id="tabFixtures" onclick="showTab('fixtures')" tabindex="2">Jadwal & Skor</button>
+        </div>
+      </div>
+
+      <!-- Tab Klasemen -->
+      <div class="table-container" id="viewStandings">
+        <table>
+          <thead>
+            <tr>
+              <th class="center" style="width: 40px;">#</th>
+              <th>Klub</th>
+              <th class="center" style="width: 46px;">Main</th>
+              <th class="center" style="width: 46px;">M</th>
+              <th class="center" style="width: 46px;">S</th>
+              <th class="center" style="width: 46px;">K</th>
+              <th class="center" style="width: 54px;">+/-</th>
+              <th class="right" style="width: 54px;">Poin</th>
+            </tr>
+          </thead>
+          <tbody id="standingsBody">
+            <tr><td colspan="8" style="text-align: center; padding: 40px; color: var(--text-muted);">Memuat klasemen...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Tab Jadwal -->
+      <div class="fixtures-list" id="viewFixtures" style="display: none;">
+        <div style="text-align: center; padding: 40px; color: var(--text-muted);">Memuat jadwal pertandingan...</div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="remote-hint">
+      <span><span class="key-badge">Remote TV</span> Gunakan tombol panah & OK</span>
+      <span><span class="key-badge">Back</span> Kembali ke Launcher</span>
+    </div>
+    <div id="lastUpdate">Diperbarui: baru saja</div>
+  </footer>
+
+  <script>
+    // Live Clock
+    function updateClock() {
+      const now = new Date();
+      const h = String(now.getHours()).padStart(2, '0');
+      const m = String(now.getMinutes()).padStart(2, '0');
+      document.getElementById('clock').textContent = `${h}:${m}`;
+      
+      const options = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
+      document.getElementById('date').textContent = now.toLocaleDateString('id-ID', options);
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // Tab Navigation
+    function showTab(name) {
+      const isStd = name === 'standings';
+      document.getElementById('tabStandings').classList.toggle('active', isStd);
+      document.getElementById('tabFixtures').classList.toggle('active', !isStd);
+      document.getElementById('viewStandings').style.display = isStd ? 'block' : 'none';
+      document.getElementById('viewFixtures').style.display = isStd ? 'none' : 'flex';
+    }
+
+    // Remote D-Pad Navigation
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowLeft') showTab('standings');
+      if (e.key === 'ArrowRight') showTab('fixtures');
+    });
+
+    // Fetch AQI Cirebon (Open-Meteo)
+    async function loadAQI() {
+      try {
+        const url = 'https://air-quality-api.open-meteo.com/v1/air-quality?latitude=-6.732&longitude=108.552&current=us_aqi,pm2_5,pm10';
+        const res = await fetch(url);
+        const data = await res.json();
+        const aqi = data.current.us_aqi || 0;
+        const pm25 = (data.current.pm2_5 || 0).toFixed(1);
+        const pm10 = (data.current.pm10 || 0).toFixed(1);
+
+        document.getElementById('aqiVal').textContent = aqi;
+        document.getElementById('pm25Val').textContent = `${pm25} µg/m³`;
+        document.getElementById('pm10Val').textContent = `${pm10} µg/m³`;
+
+        const dial = document.getElementById('aqiDial');
+        const status = document.getElementById('aqiStatus');
+        const advice = document.getElementById('aqiAdvice');
+
+        if (aqi <= 50) {
+          dial.style.background = 'radial-gradient(circle, #22c55e 0%, #14532d 100%)';
+          status.textContent = 'Baik (Good)';
+          status.style.color = '#4ade80';
+          advice.textContent = 'Kualitas udara sangat memuaskan dan risiko polusi sangat minim.';
+        } else if (aqi <= 100) {
+          dial.style.background = 'radial-gradient(circle, #eab308 0%, #713f12 100%)';
+          status.textContent = 'Sedang (Moderate)';
+          status.style.color = '#facc15';
+          advice.textContent = 'Dapat diterima untuk sebagian besar orang; kelompok rentan sebaiknya berhati-hati.';
+        } else if (aqi <= 150) {
+          dial.style.background = 'radial-gradient(circle, #f97316 0%, #7c2d12 100%)';
+          status.textContent = 'Sensitif (Unhealthy)';
+          status.style.color = '#fb923c';
+          advice.textContent = 'Kelompok rentan (asma/anak) berisiko mengalami gangguan pernapasan.';
+        } else {
+          dial.style.background = 'radial-gradient(circle, #ef4444 0%, #7f1d1d 100%)';
+          status.textContent = 'Tidak Sehat';
+          status.style.color = '#f87171';
+          advice.textContent = 'Semua orang berisiko mengalami gangguan; kurangi aktivitas luar ruangan.';
+        }
+      } catch (err) {
+        document.getElementById('aqiStatus').textContent = 'Gagal memuat';
+        document.getElementById('aqiAdvice').textContent = 'Periksa koneksi internet TV.';
+      }
+    }
+
+    // Fetch EPL Standings (ESPN)
+    async function loadStandings() {
+      try {
+        const url = 'https://site.api.espn.com/apis/v2/sports/soccer/eng.1/standings';
+        const res = await fetch(url);
+        const data = await res.json();
+        const entries = data.children[0].standings.entries;
+
+        let html = '';
+        entries.forEach((team, idx) => {
+          const rank = idx + 1;
+          const name = team.team.displayName;
+          const logo = team.team.logos && team.team.logos[0] ? team.team.logos[0].href : '';
+          
+          const stats = {};
+          (team.stats || []).forEach(s => { stats[s.name] = s.value; });
+
+          const pld = stats.gamesPlayed || 0;
+          const win = stats.wins || 0;
+          const drw = stats.ties || 0;
+          const los = stats.losses || 0;
+          const gd  = (stats.pointDifferential || 0) > 0 ? `+${stats.pointDifferential}` : (stats.pointDifferential || 0);
+          const pts = stats.points || 0;
+
+          let rankClass = '';
+          if (rank <= 4) rankClass = 'rank-ucl';
+          else if (rank === 5) rankClass = 'rank-uel';
+          else if (rank >= 18) rankClass = 'rank-rel';
+
+          html += `
+            <tr tabindex="${idx + 10}">
+              <td class="rank-cell ${rankClass}">${rank}</td>
+              <td>
+                <div class="team-cell">
+                  ${logo ? `<img class="team-logo" src="${logo}" alt="" onerror="this.style.display='none'">` : ''}
+                  <span>${name}</span>
+                </div>
+              </td>
+              <td class="center">${pld}</td>
+              <td class="center">${win}</td>
+              <td class="center">${drw}</td>
+              <td class="center">${los}</td>
+              <td class="center">${gd}</td>
+              <td class="right pts-cell">${pts}</td>
+            </tr>
+          `;
+        });
+        document.getElementById('standingsBody').innerHTML = html;
+      } catch (err) {
+        document.getElementById('standingsBody').innerHTML = '<tr><td colspan="8" style="text-align: center; color: #ef4444; padding: 20px;">Gagal memuat klasemen.</td></tr>';
+      }
+    }
+
+    // Fetch EPL Matches (ESPN)
+    async function loadFixtures() {
+      try {
+        const url = 'https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/scoreboard';
+        const res = await fetch(url);
+        const data = await res.json();
+        const events = data.events || [];
+
+        if (events.length === 0) {
+          document.getElementById('viewFixtures').innerHTML = '<div style="text-align: center; padding: 40px; color: var(--text-muted);">Tidak ada pertandingan akhir pekan ini.</div>';
+          return;
+        }
+
+        let html = '';
+        events.forEach(ev => {
+          const comp = ev.competitions[0];
+          const home = comp.competitors.find(c => c.homeAway === 'home');
+          const away = comp.competitors.find(c => c.homeAway === 'away');
+
+          const homeLogo = home.team.logo || '';
+          const awayLogo = away.team.logo || '';
+          const status = ev.status.type.state; // pre, in, post
+          const detail = ev.status.type.detail;
+
+          const dateObj = new Date(ev.date);
+          const timeStr = dateObj.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB';
+          const dateStr = dateObj.toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short' });
+
+          let midContent = '';
+          if (status === 'in' || status === 'post') {
+            midContent = `<div class="fixture-time" style="background: rgba(34, 197, 94, 0.2); color: #4ade80;">${home.score} - ${away.score}</div><div class="fixture-date">${detail}</div>`;
+          } else {
+            midContent = `<div class="fixture-time">${timeStr}</div><div class="fixture-date">${dateStr}</div>`;
+          }
+
+          html += `
+            <div class="fixture-item">
+              <div class="fixture-home">
+                <span>${home.team.displayName}</span>
+                ${homeLogo ? `<img class="team-logo" src="${homeLogo}" alt="">` : ''}
+              </div>
+              <div class="fixture-mid">
+                ${midContent}
+              </div>
+              <div class="fixture-away">
+                ${awayLogo ? `<img class="team-logo" src="${awayLogo}" alt="">` : ''}
+                <span>${away.team.displayName}</span>
+              </div>
+            </div>
+          `;
+        });
+        document.getElementById('viewFixtures').innerHTML = html;
+      } catch (err) {
+        document.getElementById('viewFixtures').innerHTML = '<div style="text-align: center; padding: 40px; color: #ef4444;">Gagal memuat jadwal.</div>';
+      }
+    }
+
+    // Initial load & refresh timer (5 minutes)
+    function refreshAll() {
+      loadAQI();
+      loadStandings();
+      loadFixtures();
+      const now = new Date();
+      document.getElementById('lastUpdate').textContent = 'Diperbarui: ' + now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+    }
+    refreshAll();
+    setInterval(refreshAll, 300000);
+  </script>
+</body>
+</html>
